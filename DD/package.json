@@ -71,6 +71,35 @@
         "command": "DD.toggleMockGenerator",
         "title": "Toggle Mock Notification Generator",
         "category": "DoNotDisturb++"
+      },
+      {
+        "command": "DD.toggleFocus",
+        "title": "Toggle Focus Mode",
+        "icon": "$(eye)",
+        "category": "DoNotDisturb++"
+      },
+      {
+        "command": "DD.setUserName",
+        "title": "Set User Name",
+        "category": "DoNotDisturb++"
+      },
+      {
+        "command": "DD.sendChatMessage",
+        "title": "Send Chat Message",
+        "icon": "$(comment-discussion)",
+        "category": "DoNotDisturb++"
+      },
+      {
+        "command": "DD.openChatPanel",
+        "title": "Open Chat Panel",
+        "icon": "$(comment-discussion)",
+        "category": "DoNotDisturb++"
+      },
+      {
+        "command": "DD.openRulesPanel",
+        "title": "Configure Notification Rules",
+        "icon": "$(settings-gear)",
+        "category": "DoNotDisturb++"
       }
     ],
     "menus": {
@@ -93,7 +122,60 @@
           "group": "inline"
         }
       ]
-    }
+    },
+    "configuration": {
+      "title": "DoNotDisturb++",
+      "properties": {
+        "dd.userName": {
+          "type": "string",
+          "default": "",
+          "description": "Your name for @mention detection. Notifications containing @yourname will be marked as important."
+        },
+        "dd.rules": {
+          "type": "array",
+          "default": [],
+          "description": "Custom notification rules. Each rule defines source, priority, action, and focus mode behavior. Use the 'Configure Notification Rules' command to edit.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "User-friendly name/title for this rule (optional, auto-generated if not provided)"
+              },
+              "source": {
+                "type": "string",
+                "description": "Notification source (e.g., 'Git', 'Build', '*' for any)"
+              },
+              "priority": {
+                "type": "number",
+                "description": "Priority level: 0=Low, 1=Medium, 2=High, 3=Critical"
+              },
+              "action": {
+                "type": "string",
+                "enum": ["allow", "suppress", "digest"],
+                "description": "Action to take: 'allow' (show immediately), 'suppress' (hide), 'digest' (sidebar)"
+              },
+              "showInFocusMode": {
+                "type": "boolean",
+                "description": "Whether to show this notification even when Focus mode is enabled"
+              },
+              "contains": {
+                "type": "string",
+                "description": "Optional text filter (case-insensitive substring match)"
+              }
+            }
+          }
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "DD.toggleFocus",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "editorTextFocus || !editorTextFocus"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

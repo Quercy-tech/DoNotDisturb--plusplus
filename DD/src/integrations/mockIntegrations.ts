@@ -78,6 +78,14 @@ export const mockIntegrations: MockNotificationTemplate[] = [
 			{ title: 'File watcher error', body: 'File watcher stopped working' },
 		],
 	},
+	{
+		source: 'Chat',
+		templates: [
+			{ title: 'Message received', body: '@user please review the PR' },
+			{ title: 'Team mention', body: 'Hey @user, can you help with this?' },
+			{ title: 'Direct message', body: '@user urgent: build is failing' },
+		],
+	},
 ];
 
 /**

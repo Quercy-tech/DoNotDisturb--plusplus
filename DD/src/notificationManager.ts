@@ -25,8 +25,10 @@ export class NotificationManager {
 	private importantNotifications: ProcessedNotification[] = []; // "allow" action notifications
 	private rules: Rule[] = [];
 	private state: RouterState = { focusMode: false };
+	private userName: string = '';
 	private onUnreadCountChanged?: (count: number) => void;
 	private onImportantCountChanged?: (count: number) => void;
+	private onFocusModeChanged?: (enabled: boolean) => void;
 
 	constructor() {
 		// Default rules
@@ -53,9 +55,85 @@ export class NotificationManager {
 	}
 
 	/**
+	 * Set callback for when focus mode changes
+	 */
+	setFocusModeCallback(callback: (enabled: boolean) => void): void {
+		this.onFocusModeChanged = callback;
+	}
+
+	/**
+	 * Set user name for @mention detection
+	 */
+	setUserName(name: string): void {
+		this.userName = name;
+	}
+
+	/**
+	 * Get user name
+	 */
+	getUserName(): string {
+		return this.userName;
+	}
+
+	/**
+	 * Toggle focus mode
+	 */
+	toggleFocusMode(): boolean {
+		this.state.focusMode = !this.state.focusMode;
+		this.notifyFocusModeChanged();
+		return this.state.focusMode;
+	}
+
+	/**
+	 * Get focus mode state
+	 */
+	isFocusMode(): boolean {
+		return this.state.focusMode;
+	}
+
+	/**
+	 * Check if notification contains @name mention
+	 */
+	private containsMention(input: NotificationInput): boolean {
+		if (!this.userName) {
+			return false;
+		}
+		const mentionPattern = new RegExp(`@${this.userName}\\b`, 'i');
+		const text = `${input.title} ${input.body}`;
+		return mentionPattern.test(text);
+	}
+
+	/**
 	 * Process a notification through the router
 	 */
 	processNotification(input: NotificationInput): Action {
+		// Check for @name mentions first - these are always important
+		if (this.containsMention(input)) {
+			const processed: ProcessedNotification = {
+				input,
+				action: 'allow',
+				timestamp: Date.now(),
+			};
+			this.processedNotifications.push(processed);
+			this.importantNotifications.push(processed);
+			this.notifyImportantCountChanged();
+			return 'allow';
+		}
+
+		// If focus mode is enabled, force everything to digest (except mentions which are handled above)
+		if (this.state.focusMode) {
+			const processed: ProcessedNotification = {
+				input,
+				action: 'digest',
+				timestamp: Date.now(),
+			};
+			this.processedNotifications.push(processed);
+			this.digestedNotifications.push(processed);
+			this.notifyUnreadCountChanged();
+			return 'digest';
+		}
+
+		// Normal routing
 		const action = route(input, this.state, this.rules);
 		const processed: ProcessedNotification = {
 			input,
@@ -72,9 +150,13 @@ export class NotificationManager {
 		}
 
 		// Track important notifications (allow action - shown in status bar)
+		// Always track them, even in focus mode (so we can show what was missed when focus mode is turned off)
 		if (action === 'allow') {
 			this.importantNotifications.push(processed);
-			this.notifyImportantCountChanged();
+			// Only notify count change if not in focus mode (to update status bar)
+			if (!this.state.focusMode) {
+				this.notifyImportantCountChanged();
+			}
 		}
 
 		return action;
@@ -142,6 +224,20 @@ export class NotificationManager {
 		if (!notification) {
 			return;
 		}
+
+		const action = this.processNotification(notification);
+		await this.showNotification(notification, action);
+	}
+
+	/**
+	 * Process a custom notification with user-provided message
+	 */
+	async processCustomNotification(source: string, title: string, body: string): Promise<void> {
+		const notification: NotificationInput = {
+			source,
+			title,
+			body,
+		};
 
 		const action = this.processNotification(notification);
 		await this.showNotification(notification, action);
@@ -222,6 +318,15 @@ export class NotificationManager {
 	private notifyImportantCountChanged(): void {
 		if (this.onImportantCountChanged) {
 			this.onImportantCountChanged(this.getImportantCount());
+		}
+	}
+
+	/**
+	 * Notify callback of focus mode change
+	 */
+	private notifyFocusModeChanged(): void {
+		if (this.onFocusModeChanged) {
+			this.onFocusModeChanged(this.state.focusMode);
 		}
 	}
 }
