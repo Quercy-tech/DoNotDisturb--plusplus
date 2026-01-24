@@ -7,7 +7,7 @@
 - [x] Create a publisher profile at marketplace.visualstudio.com/manage
 - [x] Generate a Personal Access Token (PAT) with **Marketplace (Publish)** scope
 
-**Your token:** `[REDACTED - see .env file]`
+**Your token:** Stored in `.env` file (see VSCE_PAT)
 
 - [ ] Login with VSCE: `vsce login <publisher-name>`
 
@@ -57,12 +57,11 @@ npm install -g @vscode/vsce
 ### Step 2: Login to VSCE
 ```bash
 cd "/Users/quercy/Downloads/DoNotDisturb++/DD"
-vsce login YOUR_PUBLISHER_ID
+# Load environment variables from .env file
+export $(cat .env | grep -v '^#' | xargs)
+vsce login $VSCE_PUBLISHER
 ```
-When prompted, paste your token:
-```
-[REDACTED - see .env file]
-```
+When prompted, paste your token from the `.env` file (VSCE_PAT variable).
 
 ### Step 3: Test Package
 ```bash

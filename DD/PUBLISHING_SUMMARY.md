@@ -59,12 +59,19 @@
 npm install -g @vscode/vsce
 ```
 
-### Step 3: Login
+### Step 3: Setup Environment
 ```bash
 cd "/Users/quercy/Downloads/DoNotDisturb++/DD"
-vsce login YOUR_PUBLISHER_ID
+# Make sure .env file exists (copy from .env.example if needed)
+# Load environment variables
+export $(cat .env | grep -v '^#' | xargs)
 ```
-Enter your PAT token when prompted.
+
+### Step 4: Login
+```bash
+vsce login $VSCE_PUBLISHER
+```
+Enter your PAT token from `.env` file (VSCE_PAT) when prompted.
 
 ### Step 4: Test Package
 ```bash
@@ -114,7 +121,7 @@ npm run publish
 ## 📌 Important Notes
 
 - **Publisher ID**: Must match exactly what you see at marketplace.visualstudio.com/manage
-- **Token**: Your PAT token is saved above - use it when logging in
+- **Token**: Your PAT token is stored in `.env` file (VSCE_PAT) - use it when logging in
 - **Version**: Currently `0.1.0` - increment for future releases
 - **Icon**: Required for publishing - extension won't publish without it
 

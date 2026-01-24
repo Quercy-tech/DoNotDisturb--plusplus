@@ -19,28 +19,29 @@ npm install -g @vscode/vsce
 
 ### 4. Login to VSCE
 ```bash
-vsce login YOUR_PUBLISHER_ID
+# Load environment variables from .env file
+export $(cat .env | grep -v '^#' | xargs)
+vsce login $VSCE_PUBLISHER
 ```
-When prompted, enter your Personal Access Token:
-```
-[REDACTED - see .env file]
-```
+When prompted, enter your Personal Access Token from the `.env` file (VSCE_PAT variable).
 
-### 5. Test Package
+**Note:** Make sure you have created a `.env` file from `.env.example` with your actual credentials.
+
+### 6. Test Package
 ```bash
 cd "/Users/quercy/Downloads/DoNotDisturb++/DD"
 vsce package
 ```
 This will create a `.vsix` file that you can test locally.
 
-### 6. Test Locally
+### 7. Test Locally
 1. Open VS Code
 2. Go to Extensions view
 3. Click "..." menu → "Install from VSIX..."
 4. Select the generated `.vsix` file
 5. Test all features to ensure everything works
 
-### 7. Publish
+### 8. Publish
 ```bash
 vsce publish
 ```
