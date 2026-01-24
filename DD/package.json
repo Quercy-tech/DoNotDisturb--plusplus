@@ -14,27 +14,86 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ddNotifications",
+          "title": "DoNotDisturb++",
+          "icon": "$(bell)"
+        }
+      ]
+    },
+    "views": {
+      "ddNotifications": [
+        {
+          "id": "ddNotifications",
+          "name": "Notifications",
+          "when": "true"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "DD.helloWorld",
         "title": "Hello World"
       },
       {
-        "command": "DD.showUnreadItems",
-        "title": "Show Unread Items",
-        "icon": "$(bell)"
+        "command": "DD.showImportantItems",
+        "title": "Show Important Notifications",
+        "icon": "$(warning)"
       },
       {
-        "command": "DD.incrementUnread",
-        "title": "Increment Unread Count",
+        "command": "DD.refreshNotifications",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "DD.clearDigested",
+        "title": "Clear All",
         "category": "DoNotDisturb++"
       },
       {
-        "command": "DD.clearUnread",
-        "title": "Clear Unread Items",
+        "command": "DD.clearImportant",
+        "title": "Clear Important",
+        "category": "DoNotDisturb++"
+      },
+      {
+        "command": "DD.generateMockNotification",
+        "title": "Generate Mock Notification",
+        "category": "DoNotDisturb++"
+      },
+      {
+        "command": "DD.generateFromSource",
+        "title": "Generate Notification from Source",
+        "category": "DoNotDisturb++"
+      },
+      {
+        "command": "DD.toggleMockGenerator",
+        "title": "Toggle Mock Notification Generator",
         "category": "DoNotDisturb++"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "DD.refreshNotifications",
+          "when": "view == ddNotifications",
+          "group": "navigation"
+        },
+        {
+          "command": "DD.clearDigested",
+          "when": "view == ddNotifications",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "DD.clearDigested",
+          "when": "view == ddNotifications && viewItem == notification",
+          "group": "inline"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
