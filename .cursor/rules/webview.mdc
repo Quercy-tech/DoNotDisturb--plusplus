@@ -1,0 +1,55 @@
+---
+description: Webview panel development guidelines
+globs: ["**/webview/**/*.ts", "**/*Webview*.ts", "**/*Panel*.ts"]
+---
+
+# Webview Development Rules
+
+## Creating Webview Panels
+```typescript
+const panel = vscode.window.createWebviewPanel(
+    'myWebview',
+    'My Webview',
+    vscode.ViewColumn.One,
+    {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')]
+    }
+);
+```
+
+## Security Best Practices
+- Always use Content Security Policy (CSP)
+- Use nonces for inline scripts
+- Never use `eval()` or inline event handlers
+- Sanitize all user input
+
+## CSP Template
+```typescript
+const nonce = getNonce();
+const csp = `
+    default-src 'none';
+    style-src ${webview.cspSource} 'unsafe-inline';
+    script-src 'nonce-${nonce}';
+    img-src ${webview.cspSource} https: data:;
+    font-src ${webview.cspSource};
+`;
+```
+
+## Message Passing
+Extension to Webview:
+```typescript
+panel.webview.postMessage({ command: 'update', data: myData });
+```
+
+Webview to Extension:
+```typescript
+panel.webview.onDidReceiveMessage(message => {
+    switch (message.command) {
+        case 'save':
+            // Handle save
+            break;
+    }
+}, undefined, context.subscriptions);
+```

@@ -1,0 +1,55 @@
+---
+description: Extension publishing guidelines
+globs: ["package.json", "README.md", "CHANGELOG.md", ".vscodeignore"]
+---
+
+# Publishing Checklist
+
+## Pre-Publish Requirements
+- [ ] `publisher` field set in package.json
+- [ ] Meaningful `displayName` and `description`
+- [ ] Icon added (128x128 PNG recommended)
+- [ ] README.md with features, screenshots, usage
+- [ ] CHANGELOG.md updated
+- [ ] `repository` URL in package.json
+- [ ] License file present
+- [ ] All tests passing
+
+## .vscodeignore Template
+```
+.vscode/**
+.vscode-test/**
+src/**
+.gitignore
+.yarnrc
+vsc-extension-quickstart.md
+**/tsconfig.json
+**/.eslintrc.json
+**/*.map
+**/*.ts
+!dist/**
+node_modules/**
+```
+
+## Publishing Commands
+```bash
+# Login (first time only)
+vsce login <publisher-name>
+
+# Test package locally
+vsce package
+
+# Publish
+vsce publish
+
+# Publish with version bump
+vsce publish patch  # 1.0.0 -> 1.0.1
+vsce publish minor  # 1.0.0 -> 1.1.0
+vsce publish major  # 1.0.0 -> 2.0.0
+```
+
+## Marketplace Optimization
+- Use relevant `categories` in package.json
+- Add `keywords` for searchability
+- Include screenshots in README
+- Write clear, concise descriptions

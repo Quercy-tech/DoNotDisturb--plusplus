@@ -1,0 +1,69 @@
+---
+description: Command registration and handling
+globs: ["**/commands/**/*.ts", "**/extension.ts"]
+---
+
+# Command Development Rules
+
+## Command Registration Pattern
+```typescript
+export function registerCommands(context: vscode.ExtensionContext) {
+    context.subscriptions.push(
+        vscode.commands.registerCommand('myExt.command1', command1Handler),
+        vscode.commands.registerCommand('myExt.command2', command2Handler)
+    );
+}
+```
+
+## Command Handler Pattern
+```typescript
+async function myCommandHandler(uri?: vscode.Uri): Promise<void> {
+    try {
+        const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
+        
+        if (!targetUri) {
+            vscode.window.showWarningMessage('No file selected');
+            return;
+        }
+        
+        // Command logic here
+        
+    } catch (error) {
+        vscode.window.showErrorMessage(`Command failed: ${error}`);
+    }
+}
+```
+
+## Progress Reporting
+```typescript
+await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: 'Processing...',
+    cancellable: true
+}, async (progress, token) => {
+    token.onCancellationRequested(() => {
+        // Handle cancellation
+    });
+    
+    progress.report({ increment: 0 });
+    // Do work...
+    progress.report({ increment: 50, message: 'Halfway done' });
+    // More work...
+    progress.report({ increment: 100 });
+});
+```
+
+## User Input
+```typescript
+const input = await vscode.window.showInputBox({
+    prompt: 'Enter a value',
+    placeHolder: 'e.g., myValue',
+    validateInput: (value) => {
+        return value.length < 3 ? 'Must be at least 3 characters' : null;
+    }
+});
+
+const selection = await vscode.window.showQuickPick(['Option 1', 'Option 2'], {
+    placeHolder: 'Select an option'
+});
+```

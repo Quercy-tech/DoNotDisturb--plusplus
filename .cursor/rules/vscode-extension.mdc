@@ -1,0 +1,46 @@
+---
+description: Core VS Code extension development rules - always active
+globs: ["**/*.ts", "**/*.js", "package.json"]
+alwaysApply: true
+---
+
+# VS Code Extension Development Rules
+
+## TypeScript Conventions
+- Use strict TypeScript settings
+- Prefer `const` over `let`, never use `var`
+- Use explicit return types on functions
+- Use `vscode.` namespace for all API calls
+
+## Extension Lifecycle
+- `activate()` is called when extension activates
+- `deactivate()` is called when extension deactivates
+- Register all disposables with `context.subscriptions.push()`
+
+## Error Handling
+```typescript
+try {
+    // Your code
+} catch (error) {
+    vscode.window.showErrorMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+}
+```
+
+## Commands Pattern
+```typescript
+const command = vscode.commands.registerCommand('extension.commandName', async () => {
+    // Command logic here
+});
+context.subscriptions.push(command);
+```
+
+## Configuration Access
+```typescript
+const config = vscode.workspace.getConfiguration('myExtension');
+const value = config.get<string>('settingName', 'defaultValue');
+```
+
+## File System Operations
+- Always use `vscode.Uri` for paths
+- Use `vscode.workspace.fs` for file operations
+- Handle `vscode.FileSystemError` appropriately

@@ -1,0 +1,56 @@
+---
+description: Rules for package.json extension manifest
+globs: ["package.json"]
+---
+
+# Package.json Extension Manifest Rules
+
+## Required Fields
+- `name`: lowercase, no spaces (use hyphens)
+- `displayName`: Human-readable name
+- `description`: Brief description for marketplace
+- `version`: Semantic versioning (e.g., "1.0.0")
+- `publisher`: Your marketplace publisher ID
+- `engines.vscode`: Minimum VS Code version (e.g., "^1.80.0")
+- `main`: Entry point (usually "./out/extension.js")
+
+## Activation Events
+Prefer specific events over `*`:
+- `onCommand:extension.commandName`
+- `onLanguage:javascript`
+- `workspaceContains:**/package.json`
+- `onView:myTreeView`
+
+## Contribution Points
+Common contribution types:
+- `commands`: Register commands
+- `menus`: Add to menus/context menus
+- `keybindings`: Keyboard shortcuts
+- `configuration`: Extension settings
+- `views`: Sidebar views
+- `viewsContainers`: Custom view containers
+
+## Example Structure
+```json
+{
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.myCommand",
+        "title": "My Command",
+        "category": "My Extension"
+      }
+    ],
+    "configuration": {
+      "title": "My Extension",
+      "properties": {
+        "myExtension.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the extension"
+        }
+      }
+    }
+  }
+}
+```

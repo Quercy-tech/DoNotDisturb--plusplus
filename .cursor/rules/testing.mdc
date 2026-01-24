@@ -1,0 +1,47 @@
+---
+description: VS Code extension testing guidelines
+globs: ["**/test/**/*.ts", "**/*.test.ts", "**/*.spec.ts"]
+---
+
+# VS Code Extension Testing Rules
+
+## Test Setup
+Use `@vscode/test-electron` for integration tests:
+```typescript
+import * as vscode from 'vscode';
+import * as assert from 'assert';
+
+suite('Extension Test Suite', () => {
+    vscode.window.showInformationMessage('Start all tests.');
+
+    test('Sample test', async () => {
+        assert.strictEqual(1 + 1, 2);
+    });
+});
+```
+
+## Testing Commands
+```typescript
+test('Command executes successfully', async () => {
+    await vscode.commands.executeCommand('extension.myCommand');
+    // Assert expected behavior
+});
+```
+
+## Testing with Documents
+```typescript
+test('Works with documents', async () => {
+    const doc = await vscode.workspace.openTextDocument({
+        content: 'test content',
+        language: 'plaintext'
+    });
+    const editor = await vscode.window.showTextDocument(doc);
+    // Test with editor
+});
+```
+
+## Best Practices
+- Use `async/await` for all async operations
+- Clean up resources after tests
+- Test error cases, not just happy paths
+- Mock external dependencies when possible

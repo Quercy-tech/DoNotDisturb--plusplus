@@ -9,13 +9,30 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "*"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "DD.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "DD.showUnreadItems",
+        "title": "Show Unread Items",
+        "icon": "$(bell)"
+      },
+      {
+        "command": "DD.incrementUnread",
+        "title": "Increment Unread Count",
+        "category": "DoNotDisturb++"
+      },
+      {
+        "command": "DD.clearUnread",
+        "title": "Clear Unread Items",
+        "category": "DoNotDisturb++"
       }
     ]
   },
