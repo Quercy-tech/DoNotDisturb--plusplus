@@ -40,8 +40,11 @@ vsce login $VSCE_PUBLISHER
 
 To verify no secrets are in git:
 ```bash
-git grep "[REDACTED - see .env file]"
+# Search for your PAT token (replace with your actual token pattern)
+git grep "YOUR_TOKEN_PATTERN"
 ```
 
 Should return no results (except in `.env` which is ignored).
+
+**Note:** If you've already committed secrets, you'll need to rewrite git history to remove them. See GitHub's guide on [removing sensitive data](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository).
 
