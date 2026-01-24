@@ -57,13 +57,55 @@ export function activate(context: vscode.ExtensionContext) {
 		notificationManager.setRules(routingRules);
 	});
 
+	notificationManager.setAFKModeCallback((enabled: boolean) => {
+		// Update status bar when AFK mode changes
+		updateStatusBarItem();
+	});
+
 	// Create tree view for unimportant notifications (sidebar)
 	notificationTreeProvider = new NotificationTreeProvider();
+	notificationTreeProvider.setNotificationManager(notificationManager);
 	const treeView = vscode.window.createTreeView('ddNotifications', {
 		treeDataProvider: notificationTreeProvider,
 		showCollapseAll: true,
 	});
 	context.subscriptions.push(treeView);
+
+	// Command to mark a notification as read from tree view
+	const markNotificationAsReadCommand = vscode.commands.registerCommand('DD.markNotificationAsRead', async (item: any) => {
+		try {
+			if (!item) {
+				return;
+			}
+
+			// Handle NotificationItem from tree view
+			if (item.notification) {
+				const notification = item.notification;
+				// Find the notification in the digested list and mark as read
+				const digested = notificationManager.getDigestedNotifications();
+				const index = digested.findIndex(n => 
+					n.timestamp === notification.timestamp &&
+					n.input.source === notification.input.source &&
+					n.input.title === notification.input.title
+				);
+				
+				if (index >= 0) {
+					notificationManager.markAsRead(index);
+					notificationTreeProvider.updateNotifications(notificationManager.getDigestedNotifications());
+					vscode.window.showInformationMessage(`Marked "${notification.input.title}" as read`);
+				} else {
+					vscode.window.showInformationMessage('Notification not found');
+				}
+			} else if (item && 'index' in item && typeof item.index === 'number') {
+				// Direct index access (fallback)
+				notificationManager.markAsRead(item.index);
+				notificationTreeProvider.updateNotifications(notificationManager.getDigestedNotifications());
+				vscode.window.showInformationMessage('Notification marked as read');
+			}
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to mark as read: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	});
 
 	// Create unified status bar item (shows focus mode or important count)
 	statusBarItem = vscode.window.createStatusBarItem(
@@ -80,18 +122,6 @@ export function activate(context: vscode.ExtensionContext) {
 	// Start mock notification generator (every 5 seconds)
 	startMockNotificationGenerator();
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('DD.helloWorld', async () => {
-		try {
-			// The code you place here will be executed every time your command is executed
-			// Display a message box to the user
-			vscode.window.showInformationMessage('Hello World from DoNotDisturb++!');
-		} catch (error) {
-			vscode.window.showErrorMessage(`Command failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-		}
-	});
 
 	// Unified command: toggle focus mode or show important items
 	const toggleFocusOrShowImportantCommand = vscode.commands.registerCommand('DD.toggleFocusOrShowImportant', async () => {
@@ -120,6 +150,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				} else {
 					vscode.window.showInformationMessage('Focus mode disabled - no missed notifications');
+					updateStatusBarItem();
 				}
 			} else {
 				// Not in focus mode - show important items
@@ -127,7 +158,14 @@ export function activate(context: vscode.ExtensionContext) {
 				const important = notificationManager.getImportantNotifications();
 				
 				if (count === 0) {
-					vscode.window.showInformationMessage('No important notifications');
+					// Offer to enable focus mode if no important notifications
+					const action = await vscode.window.showInformationMessage(
+						'No important notifications',
+						'Enable Focus Mode'
+					);
+					if (action === 'Enable Focus Mode') {
+						notificationManager.toggleFocusMode();
+					}
 				} else {
 					// Show list of important items
 					const items = important.map((n, i) => ({
@@ -153,13 +191,123 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	// Command to toggle AFK mode
+	const toggleAFKCommand = vscode.commands.registerCommand('DD.toggleAFK', async () => {
+		try {
+			const enabled = notificationManager.toggleAFKMode();
+			if (enabled) {
+				vscode.window.showInformationMessage('AFK mode enabled - all notifications will be queued');
+			} else {
+				// Show sorted list of all missed notifications when deactivating AFK
+				const allNotifications = notificationManager.getAllNotificationsSorted();
+				
+				if (allNotifications.length > 0) {
+					// Get important and digested separately
+					const important = notificationManager.getImportantNotifications();
+					const digested = notificationManager.getDigestedNotifications();
+
+					// Create sorted items: important first, then by timestamp
+					const items: Array<{
+						label: string;
+						description: string;
+						detail: string;
+						source: string;
+						isImportant: boolean;
+						timestamp: number;
+					}> = [];
+
+					// Add important notifications first
+					important.forEach((n) => {
+						items.push({
+							label: `$(warning) ${n.input.source}: ${n.input.title}`,
+							description: n.input.body,
+							detail: `Important • ${new Date(n.timestamp).toLocaleString()}`,
+							source: n.input.source,
+							isImportant: true,
+							timestamp: n.timestamp,
+						});
+					});
+
+					// Add digested notifications
+					digested.forEach(n => {
+						items.push({
+							label: `$(info) ${n.input.source}: ${n.input.title}`,
+							description: n.input.body,
+							detail: `Digested • ${new Date(n.timestamp).toLocaleString()}`,
+							source: n.input.source,
+							isImportant: false,
+							timestamp: n.timestamp,
+						});
+					});
+
+					// Sort: important first, then by timestamp (newest first)
+					items.sort((a, b) => {
+						if (a.isImportant !== b.isImportant) {
+							return a.isImportant ? -1 : 1;
+						}
+						return b.timestamp - a.timestamp;
+					});
+
+					// Add "Mark all as read" option at the top
+					const markAllItem = {
+						label: '$(check-all) Mark All as Read',
+						description: `Clear all ${allNotifications.length} notification${allNotifications.length === 1 ? '' : 's'}`,
+						detail: 'Click to dismiss all notifications',
+						isMarkAll: true,
+					};
+
+					const selected = await vscode.window.showQuickPick([markAllItem, ...items], {
+						placeHolder: `AFK mode disabled. You have ${allNotifications.length} notification${allNotifications.length === 1 ? '' : 's'} (${important.length} important, ${digested.length} digested)`,
+						canPickMany: false,
+					});
+
+					if (selected) {
+						if ('isMarkAll' in selected && selected.isMarkAll) {
+							// Mark all as read
+							notificationManager.clearImportant();
+							notificationManager.clearDigested();
+							updateStatusBarItem();
+							vscode.window.showInformationMessage(`Marked all ${allNotifications.length} notification${allNotifications.length === 1 ? '' : 's'} as read`);
+						} else if ('isImportant' in selected) {
+							// Regular notification item
+							if (selected.isImportant) {
+								const index = important.findIndex(n => 
+									n.input.source === selected.source && 
+									n.timestamp === selected.timestamp
+								);
+								if (index >= 0) {
+									notificationManager.markImportantAsRead(index);
+									updateStatusBarItem();
+								}
+								vscode.window.showInformationMessage(`Marked "${selected.label}" as read`);
+							} else {
+								const index = digested.findIndex(n => 
+									n.input.source === selected.source && 
+									n.timestamp === selected.timestamp
+								);
+								if (index >= 0) {
+									notificationManager.markAsRead(index);
+								}
+								vscode.window.showInformationMessage(`Marked "${selected.label}" as read`);
+							}
+						}
+					}
+				} else {
+					vscode.window.showInformationMessage('AFK mode disabled - no missed notifications');
+					updateStatusBarItem();
+				}
+			}
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to toggle AFK mode: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	});
+
 	// Keep the separate toggle command for keyboard shortcut
 	const toggleFocusCommand = vscode.commands.registerCommand('DD.toggleFocus', async () => {
 		try {
 			const enabled = notificationManager.toggleFocusMode();
 			if (enabled) {
-				// Clear important notifications when entering focus mode
-				notificationManager.clearImportant();
+				// Don't clear important notifications - we want to show them when focus mode is turned off
 				vscode.window.showInformationMessage('Focus mode enabled - all notifications silenced (except @mentions)');
 			} else {
 				// Show missed notifications when disabling focus mode
@@ -179,10 +327,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 					if (selected && 'index' in selected) {
 						notificationManager.markImportantAsRead(selected.index);
+						updateStatusBarItem();
 						vscode.window.showInformationMessage(`Marked "${selected.label}" as read`);
 					}
 				} else {
 					vscode.window.showInformationMessage('Focus mode disabled - no missed notifications');
+					updateStatusBarItem();
 				}
 			}
 		} catch (error) {
@@ -195,16 +345,21 @@ export function activate(context: vscode.ExtensionContext) {
 		notificationTreeProvider.updateNotifications(notificationManager.getDigestedNotifications());
 	});
 
-	// Command to clear digested notifications
-	const clearDigestedCommand = vscode.commands.registerCommand('DD.clearDigested', async () => {
-		try {
-			notificationManager.clearDigested();
-			notificationTreeProvider.updateNotifications([]);
-			vscode.window.showInformationMessage('Digested notifications cleared');
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to clear: ${error instanceof Error ? error.message : 'Unknown error'}`);
-		}
-	});
+		// Command to clear digested notifications
+		const clearDigestedCommand = vscode.commands.registerCommand('DD.clearDigested', async () => {
+			try {
+				const count = notificationManager.getUnreadCount();
+				if (count === 0) {
+					vscode.window.showInformationMessage('No digested notifications to clear');
+					return;
+				}
+				notificationManager.clearDigested();
+				notificationTreeProvider.updateNotifications([]);
+				vscode.window.showInformationMessage(`Cleared ${count} digested notification${count === 1 ? '' : 's'}`);
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to clear: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			}
+		});
 
 	// Command to generate a mock notification manually
 	const generateMockCommand = vscode.commands.registerCommand('DD.generateMockNotification', async () => {
@@ -231,15 +386,21 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// Command to clear important notifications
-	const clearImportantCommand = vscode.commands.registerCommand('DD.clearImportant', async () => {
-		try {
-			notificationManager.clearImportant();
-			vscode.window.showInformationMessage('Important notifications cleared');
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to clear: ${error instanceof Error ? error.message : 'Unknown error'}`);
-		}
-	});
+		// Command to clear important notifications
+		const clearImportantCommand = vscode.commands.registerCommand('DD.clearImportant', async () => {
+			try {
+				const count = notificationManager.getImportantCount();
+				if (count === 0) {
+					vscode.window.showInformationMessage('No important notifications to clear');
+					return;
+				}
+				notificationManager.clearImportant();
+				updateStatusBarItem();
+				vscode.window.showInformationMessage(`Cleared ${count} important notification${count === 1 ? '' : 's'}`);
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to clear: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			}
+		});
 
 	// Command to set user name
 	const setUserNameCommand = vscode.commands.registerCommand('DD.setUserName', async () => {
@@ -267,7 +428,7 @@ export function activate(context: vscode.ExtensionContext) {
 		ChatPanel.createOrShow(extensionUri, notificationManager);
 	});
 
-	// Command to send a custom chat message (opens panel)
+	// Command to send a custom chat message (opens panel) - same as openChatPanel
 	const sendChatMessageCommand = vscode.commands.registerCommand('DD.sendChatMessage', () => {
 		ChatPanel.createOrShow(extensionUri, notificationManager);
 	});
@@ -308,12 +469,13 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	context.subscriptions.push(
-		disposable, 
 		toggleFocusOrShowImportantCommand,
 		toggleFocusCommand,
+		toggleAFKCommand,
 		refreshTreeCommand,
 		clearDigestedCommand,
 		clearImportantCommand,
+		markNotificationAsReadCommand,
 		setUserNameCommand,
 		openChatPanelCommand,
 		sendChatMessageCommand,
@@ -340,9 +502,16 @@ function updateStatusBarItem(): void {
 		return;
 	}
 	
+	const isAFKMode = notificationManager.isAFKMode();
 	const isFocusMode = notificationManager.isFocusMode();
 	
-	if (isFocusMode) {
+	if (isAFKMode) {
+		// Show AFK mode
+		statusBarItem.text = '$(circle-slash) AFK';
+		statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+		statusBarItem.color = new vscode.ThemeColor('statusBarItem.warningForeground');
+		statusBarItem.tooltip = 'AFK mode: All notifications queued. Click to disable and see missed notifications.';
+	} else if (isFocusMode) {
 		// Show focus mode
 		statusBarItem.text = '$(eye-closed) Focus';
 		statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.prominentBackground');
@@ -355,7 +524,7 @@ function updateStatusBarItem(): void {
 			statusBarItem.text = '$(check) All clear';
 			statusBarItem.backgroundColor = undefined;
 			statusBarItem.color = undefined;
-			statusBarItem.tooltip = 'Click to enable Focus mode';
+			statusBarItem.tooltip = 'Click to view notifications or enable Focus mode';
 		} else {
 			statusBarItem.text = `$(warning) ${count} important`;
 			statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');

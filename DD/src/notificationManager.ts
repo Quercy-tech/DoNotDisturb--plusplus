@@ -24,11 +24,12 @@ export class NotificationManager {
 	private digestedNotifications: ProcessedNotification[] = [];
 	private importantNotifications: ProcessedNotification[] = []; // "allow" action notifications
 	private rules: Rule[] = [];
-	private state: RouterState = { focusMode: false };
+	private state: RouterState = { focusMode: false, afkMode: false };
 	private userName: string = '';
 	private onUnreadCountChanged?: (count: number) => void;
 	private onImportantCountChanged?: (count: number) => void;
 	private onFocusModeChanged?: (enabled: boolean) => void;
+	private onAFKModeChanged?: (enabled: boolean) => void;
 
 	constructor() {
 		// Default rules
@@ -92,6 +93,29 @@ export class NotificationManager {
 	}
 
 	/**
+	 * Toggle AFK mode
+	 */
+	toggleAFKMode(): boolean {
+		this.state.afkMode = !this.state.afkMode;
+		this.notifyAFKModeChanged();
+		return this.state.afkMode || false;
+	}
+
+	/**
+	 * Check if AFK mode is enabled
+	 */
+	isAFKMode(): boolean {
+		return this.state.afkMode || false;
+	}
+
+	/**
+	 * Set callback for when AFK mode changes
+	 */
+	setAFKModeCallback(callback: (enabled: boolean) => void): void {
+		this.onAFKModeChanged = callback;
+	}
+
+	/**
 	 * Check if notification contains @name mention
 	 */
 	private containsMention(input: NotificationInput): boolean {
@@ -118,6 +142,19 @@ export class NotificationManager {
 			this.importantNotifications.push(processed);
 			this.notifyImportantCountChanged();
 			return 'allow';
+		}
+
+		// If AFK mode is enabled, force everything to digest (except mentions which are handled above)
+		if (this.state.afkMode) {
+			const processed: ProcessedNotification = {
+				input,
+				action: 'digest',
+				timestamp: Date.now(),
+			};
+			this.processedNotifications.push(processed);
+			this.digestedNotifications.push(processed);
+			this.notifyUnreadCountChanged();
+			return 'digest';
 		}
 
 		// If focus mode is enabled, force everything to digest (except mentions which are handled above)
@@ -328,6 +365,24 @@ export class NotificationManager {
 		if (this.onFocusModeChanged) {
 			this.onFocusModeChanged(this.state.focusMode);
 		}
+	}
+
+	/**
+	 * Notify callback of AFK mode change
+	 */
+	private notifyAFKModeChanged(): void {
+		if (this.onAFKModeChanged) {
+			this.onAFKModeChanged(this.state.afkMode || false);
+		}
+	}
+
+	/**
+	 * Get all notifications sorted by timestamp (newest first)
+	 * Returns both important and digested notifications
+	 */
+	getAllNotificationsSorted(): ProcessedNotification[] {
+		const all = [...this.importantNotifications, ...this.digestedNotifications];
+		return all.sort((a, b) => b.timestamp - a.timestamp);
 	}
 }
 

@@ -184,11 +184,14 @@ export class RulesPanel {
 		}
 		.header h2 {
 			margin: 0 0 8px 0;
+			font-size: 20px;
+			font-weight: 600;
 		}
 		.header p {
 			margin: 0;
-			font-size: 12px;
+			font-size: 13px;
 			color: var(--vscode-descriptionForeground);
+			line-height: 1.5;
 		}
 		.controls {
 			margin-bottom: 20px;
@@ -199,10 +202,12 @@ export class RulesPanel {
 			background-color: var(--vscode-button-background);
 			color: var(--vscode-button-foreground);
 			border: none;
-			padding: 8px 16px;
+			padding: 10px 20px;
 			cursor: pointer;
 			font-size: 13px;
-			border-radius: 2px;
+			font-weight: 500;
+			border-radius: 4px;
+			transition: background-color 0.2s;
 		}
 		button:hover {
 			background-color: var(--vscode-button-hoverBackground);
@@ -210,6 +215,9 @@ export class RulesPanel {
 		button.secondary {
 			background-color: var(--vscode-button-secondaryBackground);
 			color: var(--vscode-button-secondaryForeground);
+		}
+		button.secondary:hover {
+			background-color: var(--vscode-button-secondaryHoverBackground);
 		}
 		.rules-container {
 			display: flex;
@@ -240,6 +248,14 @@ export class RulesPanel {
 			font-weight: 600;
 			font-size: 14px;
 			color: var(--vscode-foreground);
+			padding: 8px;
+			border: 1px solid var(--vscode-input-border);
+			background-color: var(--vscode-input-background);
+			border-radius: 4px;
+		}
+		.rule-title-input:focus {
+			outline: none;
+			border-color: var(--vscode-focusBorder);
 		}
 		.delete-btn {
 			background-color: transparent;
@@ -270,13 +286,18 @@ export class RulesPanel {
 			color: var(--vscode-descriptionForeground);
 		}
 		select, input {
-			padding: 6px;
+			padding: 8px;
 			border: 1px solid var(--vscode-input-border);
 			background-color: var(--vscode-input-background);
 			color: var(--vscode-input-foreground);
 			font-family: var(--vscode-font-family);
-			font-size: 12px;
-			border-radius: 2px;
+			font-size: 13px;
+			border-radius: 4px;
+			transition: border-color 0.2s;
+		}
+		select:focus, input:focus {
+			outline: none;
+			border-color: var(--vscode-focusBorder);
 		}
 		input[type="checkbox"] {
 			width: auto;

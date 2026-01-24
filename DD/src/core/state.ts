@@ -14,4 +14,6 @@ export interface RouterState {
   focusMode: boolean;
   /** Epoch ms; if now < snoozeUntil, force "digest". Omit when not snoozing. */
   snoozeUntil?: number;
+  /** When true, all notifications are queued (digest) - Away From Keyboard mode. */
+  afkMode?: boolean;
 }

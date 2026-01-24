@@ -169,11 +169,13 @@ export class ChatPanel {
 			background-color: var(--vscode-button-background);
 			color: var(--vscode-button-foreground);
 			border: none;
-			padding: 8px 16px;
+			padding: 10px 20px;
 			cursor: pointer;
 			font-size: 13px;
-			border-radius: 2px;
+			font-weight: 500;
+			border-radius: 4px;
 			margin-right: 8px;
+			transition: background-color 0.2s;
 		}
 		button:hover {
 			background-color: var(--vscode-button-hoverBackground);
@@ -181,6 +183,13 @@ export class ChatPanel {
 		button:disabled {
 			opacity: 0.5;
 			cursor: not-allowed;
+		}
+		button.secondary {
+			background-color: var(--vscode-button-secondaryBackground);
+			color: var(--vscode-button-secondaryForeground);
+		}
+		button.secondary:hover {
+			background-color: var(--vscode-button-secondaryHoverBackground);
 		}
 		.status {
 			margin-top: 12px;
@@ -202,13 +211,24 @@ export class ChatPanel {
 			margin-top: 8px;
 			font-size: 11px;
 			color: var(--vscode-descriptionForeground);
+			line-height: 1.4;
 		}
 		.user-name {
-			margin-bottom: 16px;
-			padding: 8px;
+			margin-bottom: 20px;
+			padding: 12px;
 			background-color: var(--vscode-editor-inactiveSelectionBackground);
-			border-radius: 2px;
+			border-radius: 4px;
 			font-size: 12px;
+			border-left: 3px solid var(--vscode-textLink-foreground);
+		}
+		.user-name strong {
+			color: var(--vscode-foreground);
+		}
+		h2 {
+			margin-top: 0;
+			margin-bottom: 20px;
+			font-size: 18px;
+			font-weight: 600;
 		}
 	</style>
 </head>
@@ -234,7 +254,7 @@ export class ChatPanel {
 	</div>
 
 	<button id="sendBtn">Send Message</button>
-	<button id="clearBtn">Clear</button>
+	<button id="clearBtn" class="secondary">Clear</button>
 
 	<div id="status" class="status"></div>
 

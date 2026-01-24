@@ -1,14 +1,31 @@
 {
-  "name": "DD",
+  "name": "donotdisturb-plus-plus",
   "displayName": "DoNotDisturb++",
-  "description": "Visual Studio Code extension for classifying notifications",
-  "version": "0.0.1",
+  "description": "Smart notification management for VS Code. Classify, prioritize, and control notifications with Focus Mode, AFK Mode, and customizable rules.",
+  "version": "0.1.0",
+  "publisher": "YOUR_PUBLISHER_ID",
   "engines": {
     "vscode": "^1.108.1"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Productivity"
   ],
+  "keywords": [
+    "notifications",
+    "focus",
+    "productivity",
+    "distraction-free",
+    "notification-management",
+    "afk",
+    "do-not-disturb"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/DoNotDisturb-Plus-Plus.git"
+  },
+  "icon": "icon.png",
+  "license": "MIT",
   "activationEvents": [
     "*"
   ],
@@ -33,15 +50,6 @@
       ]
     },
     "commands": [
-      {
-        "command": "DD.helloWorld",
-        "title": "Hello World"
-      },
-      {
-        "command": "DD.showImportantItems",
-        "title": "Show Important Notifications",
-        "icon": "$(warning)"
-      },
       {
         "command": "DD.refreshNotifications",
         "title": "Refresh",
@@ -79,6 +87,12 @@
         "category": "DoNotDisturb++"
       },
       {
+        "command": "DD.toggleAFK",
+        "title": "Toggle AFK Mode",
+        "icon": "$(circle-slash)",
+        "category": "DoNotDisturb++"
+      },
+      {
         "command": "DD.setUserName",
         "title": "Set User Name",
         "category": "DoNotDisturb++"
@@ -100,6 +114,12 @@
         "title": "Configure Notification Rules",
         "icon": "$(settings-gear)",
         "category": "DoNotDisturb++"
+      },
+      {
+        "command": "DD.markNotificationAsRead",
+        "title": "Mark as Read",
+        "icon": "$(check)",
+        "category": "DoNotDisturb++"
       }
     ],
     "menus": {
@@ -117,8 +137,13 @@
       ],
       "view/item/context": [
         {
-          "command": "DD.clearDigested",
+          "command": "DD.markNotificationAsRead",
           "when": "view == ddNotifications && viewItem == notification",
+          "group": "inline"
+        },
+        {
+          "command": "DD.clearDigested",
+          "when": "view == ddNotifications && viewItem == category",
           "group": "inline"
         }
       ]
@@ -174,6 +199,12 @@
         "key": "ctrl+shift+f",
         "mac": "cmd+shift+f",
         "when": "editorTextFocus || !editorTextFocus"
+      },
+      {
+        "command": "DD.toggleAFK",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a",
+        "when": "editorTextFocus || !editorTextFocus"
       }
     ]
   },
@@ -183,7 +214,9 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/vscode": "^1.108.1",

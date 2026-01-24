@@ -21,9 +21,10 @@ class NotificationCategoryItem extends vscode.TreeItem {
 	) {
 		super(label, collapsibleState);
 		this.icon = icon;
-		this.tooltip = `${this.label} (${count} notification${count === 1 ? '' : 's'})`;
-		this.description = `${count}`;
+		this.tooltip = `${this.label}: ${count} notification${count === 1 ? '' : 's'} (digested - shown in sidebar)`;
+		this.description = `${count} item${count === 1 ? '' : 's'}`;
 		this.iconPath = new vscode.ThemeIcon(this.icon);
+		this.contextValue = 'category';
 	}
 }
 
@@ -35,11 +36,28 @@ class NotificationItem extends vscode.TreeItem {
 		public readonly notification: ProcessedNotification,
 		public readonly category: string
 	) {
-		super(notification.input.title, vscode.TreeItemCollapsibleState.None);
+		// Truncate long titles to reduce visual clutter
+		const maxTitleLength = 50;
+		const displayTitle = notification.input.title.length > maxTitleLength 
+			? notification.input.title.substring(0, maxTitleLength) + '...'
+			: notification.input.title;
 		
-		this.description = this.getTimeAgo(notification.timestamp);
-		this.tooltip = `${notification.input.source}: ${notification.input.title}\n${notification.input.body}\n${new Date(notification.timestamp).toLocaleString()}`;
+		super(displayTitle, vscode.TreeItemCollapsibleState.None);
+		
+		// Show shorter time format
+		const timeAgo = this.getTimeAgo(notification.timestamp);
+		// Truncate body in description to reduce clutter
+		const bodyPreview = notification.input.body.length > 35 
+			? notification.input.body.substring(0, 35) + '...'
+			: notification.input.body;
+		this.description = `${timeAgo} • ${bodyPreview}`;
+		this.tooltip = `${notification.input.source}: ${notification.input.title}\n\n${notification.input.body}\n\nTime: ${new Date(notification.timestamp).toLocaleString()}\n\nClick or right-click to mark as read`;
 		this.contextValue = 'notification';
+		this.command = {
+			command: 'DD.markNotificationAsRead',
+			title: 'Mark as Read',
+			arguments: [this]
+		};
 		
 		// Set icon based on source
 		this.iconPath = this.getIconForSource(notification.input.source);
@@ -81,6 +99,7 @@ export class NotificationTreeProvider implements vscode.TreeDataProvider<vscode.
 	readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
 	private notifications: ProcessedNotification[] = [];
+	private notificationManager?: any; // Reference to NotificationManager for marking as read
 
 	refresh(): void {
 		this._onDidChangeTreeData.fire();
@@ -89,6 +108,17 @@ export class NotificationTreeProvider implements vscode.TreeDataProvider<vscode.
 	updateNotifications(notifications: ProcessedNotification[]): void {
 		this.notifications = notifications;
 		this.refresh();
+	}
+
+	setNotificationManager(manager: any): void {
+		this.notificationManager = manager;
+	}
+
+	getNotificationByIndex(index: number): ProcessedNotification | undefined {
+		if (index >= 0 && index < this.notifications.length) {
+			return this.notifications[index];
+		}
+		return undefined;
 	}
 
 	getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
@@ -110,6 +140,11 @@ export class NotificationTreeProvider implements vscode.TreeDataProvider<vscode.
 	}
 
 	private getCategories(): NotificationCategoryItem[] {
+		// If no notifications, return empty array (tree view will show empty state)
+		if (this.notifications.length === 0) {
+			return [];
+		}
+
 		// Group notifications by source
 		const grouped = new Map<string, ProcessedNotification[]>();
 		
@@ -146,17 +181,29 @@ export class NotificationTreeProvider implements vscode.TreeDataProvider<vscode.
 			const notifications = grouped.get(source)!;
 			const config = categoryConfig[source] || { icon: 'bell', priority: 999 };
 			
+			// Collapse by default to reduce visual clutter (less overwhelming)
 			const categoryItem = new NotificationCategoryItem(
 				source,
-				vscode.TreeItemCollapsibleState.Expanded,
+				vscode.TreeItemCollapsibleState.Collapsed,
 				config.icon,
 				notifications.length
 			);
 
 			// Create notification items for this category
-			categoryItem.children = notifications
-				.sort((a, b) => b.timestamp - a.timestamp) // Most recent first
-				.map(n => new NotificationItem(n, source));
+			// Limit to 10 most recent per category to reduce overwhelming list
+			const sortedNotifications = notifications
+				.sort((a, b) => b.timestamp - a.timestamp); // Most recent first
+			
+			// Find indices in the original digested notifications array
+			categoryItem.children = sortedNotifications.slice(0, 10).map((n) => {
+				return new NotificationItem(n, source);
+			});
+			
+			// Update count to show if there are more
+			if (notifications.length > 10) {
+				categoryItem.description = `10 of ${notifications.length} items`;
+				categoryItem.tooltip = `${categoryItem.label}: ${notifications.length} notification${notifications.length === 1 ? '' : 's'} (showing 10 most recent)`;
+			}
 
 			categories.push(categoryItem);
 		}
