@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="icon.png" alt="DoNotDisturb++ icon" width="128" />
+</p>
 🔕 DoNotDisturb++
 
 DoNotDisturb++ is a VS Code extension designed to help you focus deeply by taking control of your notifications — instead of letting them control you.
