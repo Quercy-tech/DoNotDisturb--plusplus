@@ -1,24 +1,37 @@
 <p align="center">
-  <img src="icon.png" alt="DoNotDisturb++ icon" width="128" />
+  <img src="icon.png" alt="DoNotDisturb++ icon" width="200" />
 </p>
-🔕 DoNotDisturb++
 
-DoNotDisturb++ is a VS Code extension designed to help you focus deeply by taking control of your notifications — instead of letting them control you.
+<h1 align="center">🔕 DoNotDisturb++</h1>
 
-Rather than simply muting everything, DoNotDisturb++ lets you categorize notifications by importance and context, so you stay informed without breaking your flow. Critical alerts get through. Noise stays out.
+<p align="center">
+  🏆 <strong>Winner — Stuttgart Hackathon 2026 (1st place)</strong>
+</p>
 
-Built for developers who care about productivity, clarity, and uninterrupted focus.
+---
 
-🏆 Winner — Stuttgart Hackathon 2026 (1st place)
-🛒 Available now on the VS Code Marketplace
+**DoNotDisturb++** is a VS Code extension designed to help you **focus deeply** by taking control of your notifications — instead of letting them control you.
+
+Rather than muting everything, DoNotDisturb++ allows you to **categorize notifications by importance and context**, so you stay informed without breaking your flow.  
+Critical alerts get through. Noise stays out.
+
+Built for developers who value **productivity, clarity, and uninterrupted focus**.
+
+---
+
+## ✨ Key Features
+- Categorize notifications by priority  
+- Reduce distractions without missing what matters  
+- Stay focused during deep work sessions  
+- Seamless integration with VS Code  
+
+---
+
+## 🛒 Availability
+
+DoNotDisturb++ is available on the **VS Code Marketplace**:  
 👉 https://marketplace.visualstudio.com/items?itemName=crasyK.donotdisturb-plus-plus
 
-✨ Key Features
-	•	Categorize notifications by priority
-	•	Reduce distractions without missing what matters
-	•	Stay focused during deep work sessions
-	•	Seamless integration with VS Code
-
-Whether you’re coding late at night, preparing for deadlines, or working in flow mode — DoNotDisturb++ helps you stay in control.
+---
 
 Focus smarter. Code better.
