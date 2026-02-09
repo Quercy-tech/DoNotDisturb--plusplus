@@ -4,3 +4,14 @@ node_modules/
 *.vsix
 .env
 
+# Compiled TypeScript files
+**/*.js
+**/*.js.map
+!out/**/*.js
+
+# Source maps (already covered above, but explicit)
+**/*.map
+
+# System files
+.DS_Store
+Thumbs.db
